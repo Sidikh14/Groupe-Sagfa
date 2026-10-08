@@ -9,6 +9,12 @@ const contact = {
   horaires: "[HORAIRES]",
 };
 
+/* ⚠️ À REMPLACER : numéro WhatsApp au format international, sans + ni espaces (ex. 221770000000) */
+const WHATSAPP_NUMERO = "221783036770"; // numéro de test
+const lienDevis = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(
+  "Bonjour Groupe SAGFA, je souhaite obtenir un devis."
+)}`;
+
 /* ⚠️ À REMPLACER par les vrais noms de partenaires */
 const secteurs = [
   { name: "BTP & Génie civil", partenaires: ["[PARTENAIRE]", "[PARTENAIRE]", "[PARTENAIRE]"] },
@@ -64,7 +70,7 @@ export default function Home() {
               votre entreprise, sur une seule plateforme conçue par nos équipes.
             </p>
             <div className="hero__actions">
-              <Link href="/contact" className="btn">Prendre rendez-vous</Link>
+              <Link href="/rendez-vous" className="btn">Prendre rendez-vous</Link>
               <Link href="/#services" className="btn btn--ghost">Découvrir nos services</Link>
             </div>
             <ul className="checks">
@@ -129,7 +135,7 @@ export default function Home() {
             <article className="card card--cta">
               <h3 style={{ marginTop: 0 }}>Un besoin spécifique ?</h3>
               <p>Parlons-en. Nous construisons une offre adaptée à votre organisation.</p>
-              <Link href="/contact" className="btn btn--light btn--sm">Demander un devis</Link>
+              <a href={lienDevis} target="_blank" rel="noopener noreferrer" className="btn btn--light btn--sm">Demander un devis</a>
             </article>
           </div>
         </div>

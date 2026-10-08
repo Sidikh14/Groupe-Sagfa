@@ -20,7 +20,7 @@ export default function Header() {
           {links.map((l) => (
             <Link key={l.href} href={l.href}>{l.label}</Link>
           ))}
-          <Link href="/contact" className="btn btn--sm">Nous contacter</Link>
+          <Link href="/#contact" className="btn btn--sm">Nous contacter</Link>
         </nav>
         <details className="menu">
           <summary>Menu</summary>
@@ -28,7 +28,7 @@ export default function Header() {
             {links.map((l) => (
               <Link key={l.href} href={l.href}>{l.label}</Link>
             ))}
-            <Link href="/contact">Nous contacter</Link>
+            <Link href="/#contact">Nous contacter</Link>
           </nav>
         </details>
       </div>

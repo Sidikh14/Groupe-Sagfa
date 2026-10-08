@@ -1,29 +1,13 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/Logo";
+import Flash from "@/components/Flash";
+import { site, contact, secteurs } from "@/lib/site";
+import { requestAppointment } from "@/lib/actions";
+import { modules, poles } from "@/lib/site";
 
-/* ⚠️ À REMPLACER par les vraies informations (maquette : [ADRESSE], [NUMÉRO], [EMAIL], [HORAIRES]) */
-const contact = {
-  adresse: "[ADRESSE], Dakar",
-  telephone: "(+221) [NUMÉRO]",
-  email: "[EMAIL]",
-  horaires: "[HORAIRES]",
-};
-
-/* ⚠️ À REMPLACER : numéro WhatsApp au format international, sans + ni espaces (ex. 221770000000) */
-const WHATSAPP_NUMERO = "221783036770"; // numéro de test
-const lienDevis = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(
+const lienDevis = `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(
   "Bonjour Groupe SAGFA, je souhaite obtenir un devis."
 )}`;
-
-/* ⚠️ À REMPLACER par les vrais noms de partenaires */
-const secteurs = [
-  { name: "BTP & Génie civil", partenaires: ["[PARTENAIRE]", "[PARTENAIRE]", "[PARTENAIRE]"] },
-  { name: "Commerce & Distribution", partenaires: ["[PARTENAIRE]", "[PARTENAIRE]", "[PARTENAIRE]"] },
-  { name: "Santé & Pharmacie", partenaires: ["[PARTENAIRE]", "[PARTENAIRE]", "[PARTENAIRE]"] },
-  { name: "Industrie & Production", partenaires: ["[PARTENAIRE]", "[PARTENAIRE]", "[PARTENAIRE]"] },
-  { name: "Immobilier & Services", partenaires: ["[PARTENAIRE]", "[PARTENAIRE]", "[PARTENAIRE]"] },
-  { name: "Transport & Logistique", partenaires: ["[PARTENAIRE]", "[PARTENAIRE]", "[PARTENAIRE]"] },
-];
 
 const icons: Record<string, React.ReactNode> = {
   compta: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
@@ -41,22 +25,15 @@ function Icon({ name }: { name: string }) {
 }
 
 const services = [
-  { icon: "compta", name: "Comptabilité", text: "Tenue des comptes, révision, états financiers annuels et tableaux de bord pour piloter votre activité." },
-  { icon: "fisc", name: "Fiscalité", text: "Déclarations DGID, BRS, État 1024, conseil fiscal et accompagnement en cas de contrôle." },
-  { icon: "rh", name: "Paie & Ressources Humaines", text: "Bulletins de paie, déclarations IPRES et CSS, contrats, congés et gestion du personnel." },
-  { icon: "ipm", name: "IPM", text: "Gestion de votre Institution de Prévoyance Maladie : adhérents, cotisations, prises en charge et remboursements." },
-  { icon: "info", name: "Informatique", text: "Installation de logiciels de gestion ; matériel et maintenance avec notre partenaire MICROCLEAN." },
+  { icon: "compta", slug: "comptabilite", name: "Comptabilité", text: "Tenue des comptes, révision, états financiers annuels et tableaux de bord pour piloter votre activité." },
+  { icon: "fisc", slug: "fiscalite", name: "Fiscalité", text: "Déclarations DGID, BRS, État 1024, conseil fiscal et accompagnement en cas de contrôle." },
+  { icon: "rh", slug: "paie-rh", name: "Paie & Ressources Humaines", text: "Bulletins de paie, déclarations IPRES et CSS, contrats, congés et gestion du personnel." },
+  { icon: "ipm", slug: "ipm", name: "IPM", text: "Gestion de votre Institution de Prévoyance Maladie : adhérents, cotisations, prises en charge et remboursements." },
+  { icon: "info", slug: "informatique", name: "Informatique", text: "Installation de logiciels de gestion ; matériel et maintenance avec notre partenaire MICROCLEAN." },
 ];
 
-const modules = [
-  { name: "Paie & RH" }, { name: "Comptabilité & Fiscalité" },
-  { name: "Stock & Production" }, { name: "Ventes & Facturation" },
-  { name: "IPM" }, { name: "Location & Vente de biens" },
-  { name: "Multi-entreprises" }, { name: "Pharmacie *", soon: true },
-  { name: "Tailleur & Couture *", soon: true },
-];
-
-export default function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ ok?: string; erreur?: string }> }) {
+  const { ok, erreur } = await searchParams;
   return (
     <>
       {/* HERO */}
@@ -130,6 +107,7 @@ export default function Home() {
                 <span className="chip"><Icon name={s.icon} /></span>
                 <h3>{s.name}</h3>
                 <p>{s.text}</p>
+                <Link href={`/metiers/${s.slug}`} style={{ display: "inline-block", marginTop: ".8rem", fontSize: ".85rem", fontWeight: 600, color: "var(--green)", textDecoration: "none" }}>En savoir plus →</Link>
               </article>
             ))}
             <article className="card card--cta">
@@ -177,7 +155,7 @@ export default function Home() {
               ))}
             </ul>
             <p className="footnote">* Bientôt disponible</p>
-            <Link href="/logiciels" className="btn btn--light btn--sm">Voir les abonnements</Link>
+            <Link href="/sagfa360" className="btn btn--light btn--sm">Découvrir SAGFA360</Link>
           </div>
           <div className="dash" aria-hidden="true">
             <div className="dash__side"><LogoMark variant="dark" /></div>
@@ -236,7 +214,20 @@ export default function Home() {
           <div className="contact__card">
             <h3>Envoyer ma demande</h3>
             <p>Dites-nous votre activité et le service qui vous intéresse : nous vous répondons pour fixer un rendez-vous.</p>
-            <Link href="/contact" className="btn">Ouvrir le formulaire</Link>
+            <Flash ok={ok ? "Demande envoyée. Nous vous rappelons pour confirmer le rendez-vous." : undefined} error={erreur} />
+            <form action={requestAppointment} className="form">
+              <input type="hidden" name="from" value="accueil" />
+              <label>Nom complet<input name="name" required autoComplete="name" /></label>
+              <label>Téléphone<input name="phone" type="tel" required autoComplete="tel" /></label>
+              <label>Email (facultatif)<input name="email" type="email" autoComplete="email" /></label>
+              <label>Sujet
+                <select name="pole">
+                  {[...poles.map((x) => x.name), "SAGFA360", "Autre"].map((n) => <option key={n}>{n}</option>)}
+                </select>
+              </label>
+              <label>Message (facultatif)<textarea name="message" rows={4} /></label>
+              <button className="btn">Envoyer ma demande</button>
+            </form>
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { db } from "./db";
+import { notify } from "./mail";
 import { checkPassword, endSession, hashPassword, requireAdmin, requireUser, startSession } from "./auth";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
@@ -29,12 +30,19 @@ export async function logout() {
 }
 
 export async function requestAppointment(f: FormData) {
+  const from = str(f, "from") === "rendez-vous" ? "rendez-vous" : "accueil";
+  const back = (q: string): never => redirect(from === "rendez-vous" ? `/rendez-vous?${q}` : `/?${q}#contact`);
   const name = str(f, "name"), phone = str(f, "phone");
-  if (!name || phone.length < 6) fail("/contact", "Indiquez votre nom et un numéro de téléphone valide.");
+  if (!name || phone.length < 6) back(`erreur=${encodeURIComponent("Indiquez votre nom et un numéro de téléphone valide.")}`);
+  const pole = str(f, "pole") || "Autre";
   await db.appointmentRequest.create({
-    data: { name, phone, email: str(f, "email") || null, pole: str(f, "pole") || "Autre", message: str(f, "message") || null },
+    data: { name, phone, email: str(f, "email") || null, pole, message: str(f, "message") || null },
   });
-  redirect("/contact?ok=1");
+  await notify(
+    `Nouvelle demande — ${pole}`,
+    `Nom : ${name}\nTéléphone : ${phone}\nEmail : ${str(f, "email") || "—"}\nSujet : ${pole}\nMessage : ${str(f, "message") || "—"}\nSource : ${from === "rendez-vous" ? "page Rendez-vous" : "formulaire de l'accueil"}`
+  );
+  back("ok=1");
 }
 
 export async function subscribe(f: FormData) {

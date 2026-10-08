@@ -10,12 +10,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role { CLIENT ADMIN }
-enum Interval { MONTH YEAR }
-enum OrderStatus { PENDING PAID FAILED CANCELED }
-enum SubscriptionStatus { ACTIVE EXPIRED CANCELED }
-enum PaymentProvider { WAVE ORANGE_MONEY STRIPE }
-enum AppointmentStatus { NEW CONFIRMED DONE CANCELED }
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+enum Interval {
+  MONTH
+  YEAR
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+enum PaymentProvider {
+  WAVE
+  ORANGE_MONEY
+  STRIPE
+}
+
+enum AppointmentStatus {
+  NEW
+  CONFIRMED
+  DONE
+  CANCELED
+}
 
 model User {
   id           String   @id @default(cuid())

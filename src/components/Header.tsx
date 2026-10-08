@@ -6,6 +6,7 @@ const links = [
   { href: "/ipm", label: "IPM" },
   { href: "/logiciels", label: "Logiciels" },
   { href: "/a-propos", label: "À propos" },
+  { href: "/compte", label: "Mon compte" },
 ];
 
 export default function Header() {

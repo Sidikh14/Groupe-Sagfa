@@ -151,7 +151,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ o
             </p>
             <ul className="modules">
               {modules.map((m) => (
-                <li key={m.name} className={m.soon ? "soon" : undefined}>{m.name}</li>
+                <li key={m.slug} className={m.soon ? "soon" : undefined}><Link href={`/sagfa360/${m.slug}`}>{m.name}</Link></li>
               ))}
             </ul>
             <p className="footnote">* Bientôt disponible</p>

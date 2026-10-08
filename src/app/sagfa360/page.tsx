@@ -16,38 +16,32 @@ export default function Sagfa360() {
           <span className="eyebrow">Notre plateforme</span>
           <h1>SAGFA<em>360</em></h1>
           <p className="lead">
-            Des modules distincts, une vision d’ensemble. SAGFA360 réunit toutes vos activités de gestion
-            dans un même outil, conçu par nos équipes à Dakar.
+            Des modules distincts, une vision d’ensemble. Chaque module répond à un besoin précis, et tous
+            partagent les mêmes données.
           </p>
         </div>
       </section>
+      <section className="section section--white">
+        <div className="wrap">
+          <span className="eyebrow">Les modules</span>
+          <h2>Choisissez le module qui vous intéresse.</h2>
+          <div className="cards">
+            {modules.map((m) => (
+              <article key={m.slug} className="card">
+                {m.soon && <span className="badge-soon">Bientôt disponible</span>}
+                <h3>{m.name}</h3>
+                <p>{m.tagline}</p>
+                <Link href={`/sagfa360/${m.slug}`} className="card__more">Voir le module →</Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
       <section className="section section--dark">
-        <div className="wrap platform">
-          <div>
-            <h2 className="platform__name">Tout votre dossier, <span>au même endroit.</span></h2>
-            <p>
-              C’est sur SAGFA360 que nous traitons votre dossier. Vos documents, bulletins, états et
-              déclarations y restent disponibles à tout moment.
-            </p>
-            <ul className="modules">
-              {modules.map((m) => (
-                <li key={m.name} className={m.soon ? "soon" : undefined}>{m.name}</li>
-              ))}
-            </ul>
-            <p className="footnote">* Bientôt disponible</p>
-            <Link href="/rendez-vous" className="btn btn--light">Demander une démonstration</Link>
-          </div>
-          <div className="dash" aria-hidden="true">
-            <div className="dash__side" />
-            <div className="dash__main">
-              <div className="dash__kpis"><i /><i /><i /></div>
-              <div className="dash__bars">
-                <b style={{ height: "35%" }} /><b className="sd" style={{ height: "55%" }} /><b style={{ height: "45%" }} />
-                <b className="dk" style={{ height: "70%" }} /><b className="dk" style={{ height: "55%" }} />
-                <b style={{ height: "62%" }} /><b className="dk" style={{ height: "90%" }} />
-              </div>
-            </div>
-          </div>
+        <div className="wrap">
+          <h2>Envie de voir SAGFA360 en action ?</h2>
+          <p className="muted">Une démonstration vous est offerte lors d’un premier rendez-vous.</p>
+          <Link href="/rendez-vous" className="btn btn--light">Demander une démonstration</Link>
         </div>
       </section>
     </>

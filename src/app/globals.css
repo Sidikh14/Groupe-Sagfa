@@ -232,3 +232,53 @@ th { font-weight: 700; background: var(--white); }
 .plan { border: 1px solid var(--line); background: var(--white); padding: 1rem 1.2rem; border-radius: 10px; }
 .grid2 { display: grid; gap: 3rem; }
 @media (min-width: 900px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+
+/* ===== Effet de survol des icônes (soulève + ombre, grossit, passe au vert) — 0,3 s ===== */
+.chip,
+.hero-card__art svg,
+.dash__side svg,
+a > svg:not(.logo__mark),
+button > svg:not(.logo__mark) {
+  transition: transform .3s ease, box-shadow .3s ease, filter .3s ease, background-color .3s ease, border-color .3s ease, color .3s ease;
+  will-change: transform;
+}
+.chip svg { transition: color .3s ease, stroke .3s ease, fill .3s ease; }
+
+/* Pastilles d'icônes (approche, services, etc.) : se soulèvent et passent au vert du logo */
+.chip:hover,
+.card:hover .chip,
+.pillars li:hover .chip {
+  transform: translateY(-4px) scale(1.12);
+  box-shadow: 0 8px 16px rgba(15, 76, 71, .28);
+  background: var(--green);
+  border-color: var(--green);
+}
+.chip--green:hover,
+.pillars li:hover .chip--green { background: var(--green-dark); border-color: var(--green-dark); }
+.chip:hover svg,
+.card:hover .chip svg,
+.pillars li:hover .chip svg { color: var(--white); }
+
+/* Illustration du hero et icônes du tableau de bord : soulèvement + ombre */
+.hero-card__art svg:hover,
+.dash__side svg:hover {
+  transform: translateY(-4px) scale(1.12);
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .28));
+}
+
+/* Autres icônes SVG dans liens et boutons (le logo est exclu) */
+a:hover > svg:not(.logo__mark),
+button:hover > svg:not(.logo__mark) {
+  transform: translateY(-4px) scale(1.12);
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .25));
+  color: var(--green);
+}
+.btn:hover > svg,
+.card--cta:hover svg,
+.footer a:hover > svg { color: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chip:hover, .card:hover .chip, .pillars li:hover .chip,
+  .hero-card__art svg:hover, .dash__side svg:hover,
+  a:hover > svg, button:hover > svg { transform: none; }
+}

@@ -233,52 +233,105 @@ th { font-weight: 700; background: var(--white); }
 .grid2 { display: grid; gap: 3rem; }
 @media (min-width: 900px) { .grid2 { grid-template-columns: 1fr 1fr; } }
 
-/* ===== Effet de survol des icônes (soulève + ombre, grossit, passe au vert) — 0,3 s ===== */
+/* ===================================================================
+   ANIMATIONS MODERNES (survol) — icônes, cartes, boutons, liens
+   =================================================================== */
+:root { --ease-out: cubic-bezier(.22, 1, .36, 1); --ease-spring: cubic-bezier(.34, 1.56, .64, 1); }
+
+/* ----- Icônes : toute la pastille (fond + pictogramme) réagit ----- */
 .chip,
 .hero-card__art svg,
-.dash__side svg,
-a > svg:not(.logo__mark),
-button > svg:not(.logo__mark) {
-  transition: transform .3s ease, box-shadow .3s ease, filter .3s ease, background-color .3s ease, border-color .3s ease, color .3s ease;
+.dash__side svg {
+  transition: transform .45s var(--ease-spring), box-shadow .35s ease, background-color .3s ease, border-color .3s ease;
   will-change: transform;
 }
-.chip svg { transition: color .3s ease, stroke .3s ease, fill .3s ease; }
+.chip svg { transition: transform .45s var(--ease-spring), color .3s ease; }
 
-/* Pastilles d'icônes (approche, services, etc.) : se soulèvent et passent au vert du logo */
+/* La carte entière se soulève, et sa pastille d'icône s'anime avec elle */
+.card { transition: transform .4s var(--ease-out), box-shadow .4s var(--ease-out), border-color .3s ease; }
+.card:hover {
+  transform: translateY(-6px);
+  border-color: var(--sage);
+  box-shadow: 0 20px 36px -14px rgba(15, 76, 71, .3);
+}
+
 .chip:hover,
 .card:hover .chip,
 .pillars li:hover .chip {
-  transform: translateY(-4px) scale(1.12);
-  box-shadow: 0 8px 16px rgba(15, 76, 71, .28);
+  transform: translateY(-4px) scale(1.18) rotate(-5deg);
   background: var(--green);
   border-color: var(--green);
+  box-shadow: 0 0 0 6px rgba(143, 170, 153, .35), 0 14px 26px -8px rgba(15, 76, 71, .55);
 }
 .chip--green:hover,
 .pillars li:hover .chip--green { background: var(--green-dark); border-color: var(--green-dark); }
 .chip:hover svg,
 .card:hover .chip svg,
-.pillars li:hover .chip svg { color: var(--white); }
+.pillars li:hover .chip svg { color: var(--white); transform: scale(1.1) rotate(5deg); }
 
-/* Illustration du hero et icônes du tableau de bord : soulèvement + ombre */
 .hero-card__art svg:hover,
-.dash__side svg:hover {
-  transform: translateY(-4px) scale(1.12);
-  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .28));
-}
+.dash__side svg:hover { transform: translateY(-4px) scale(1.12); filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .28)); }
 
-/* Autres icônes SVG dans liens et boutons (le logo est exclu) */
-a:hover > svg:not(.logo__mark),
-button:hover > svg:not(.logo__mark) {
-  transform: translateY(-4px) scale(1.12);
-  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .25));
-  color: var(--green);
+/* ----- Boutons : remplissage glissant, élévation, appui ----- */
+.btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: transform .3s var(--ease-out), box-shadow .3s var(--ease-out), color .3s ease, border-color .3s ease;
 }
-.btn:hover > svg,
-.card--cta:hover svg,
-.footer a:hover > svg { color: inherit; }
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--green-dark);
+  transform: translateX(-101%);
+  transition: transform .45s var(--ease-out);
+}
+.btn:hover { background: var(--green); transform: translateY(-3px); box-shadow: 0 14px 24px -10px rgba(15, 76, 71, .55); }
+.btn:hover::before { transform: translateX(0); }
+.btn:active { transform: translateY(0) scale(.97); box-shadow: 0 4px 8px -4px rgba(15, 76, 71, .4); transition-duration: .1s; }
+
+.btn--ghost:hover { background: transparent; color: var(--white); border-color: var(--green); }
+.btn--ghost::before { background: var(--green); }
+
+.btn--light:hover { background: var(--paper); }
+.btn--light::before { background: var(--white); }
+.btn--light:hover { box-shadow: 0 14px 24px -10px rgba(0, 0, 0, .35); }
+
+/* ----- Liens du menu : soulignement qui se dessine ----- */
+.nav a:not(.btn) { position: relative; padding: .25rem 0; }
+.nav a:not(.btn)::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -2px;
+  height: 2px;
+  background: var(--green);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .35s var(--ease-out);
+}
+.nav a:not(.btn):hover::after { transform: scaleX(1); }
+.menu nav a { transition: padding-left .25s var(--ease-out), color .25s ease; }
+.menu nav a:hover { padding-left: .5rem; color: var(--green); }
+
+/* ----- Autres éléments interactifs ----- */
+.sector { transition: transform .35s var(--ease-out), box-shadow .35s var(--ease-out), border-color .3s ease; }
+.sector:hover { transform: translateY(-4px); border-color: var(--sage); box-shadow: 0 14px 26px -14px rgba(15, 76, 71, .3); }
+.benefit { transition: transform .35s var(--ease-out), box-shadow .35s var(--ease-out); }
+.benefit:hover { transform: translateY(-4px); box-shadow: 0 12px 22px -14px rgba(15, 76, 71, .3); }
+.sector li { transition: background-color .25s ease, color .25s ease, border-color .25s ease; }
+.sector li:hover { background: var(--green); color: var(--white); border-color: var(--green); }
+
+.whatsapp { transition: transform .3s var(--ease-spring), box-shadow .3s ease; }
+.whatsapp:hover { transform: translateY(-4px) scale(1.06); box-shadow: 0 14px 28px rgba(0, 0, 0, .3); }
+.whatsapp:active { transform: scale(.96); }
+
+.form input, .form select, .form textarea { transition: border-color .25s ease, box-shadow .25s ease; }
+.form input:focus, .form select:focus, .form textarea:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 4px rgba(143, 170, 153, .35); }
 
 @media (prefers-reduced-motion: reduce) {
-  .chip:hover, .card:hover .chip, .pillars li:hover .chip,
-  .hero-card__art svg:hover, .dash__side svg:hover,
-  a:hover > svg, button:hover > svg { transform: none; }
+  .card:hover, .chip:hover, .card:hover .chip, .pillars li:hover .chip, .chip:hover svg, .card:hover .chip svg,
+  .btn:hover, .btn:active, .sector:hover, .benefit:hover, .whatsapp:hover { transform: none; }
+  .btn::before { transition: none; }
 }

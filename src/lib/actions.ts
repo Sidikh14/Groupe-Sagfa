@@ -152,19 +152,22 @@ export async function deleteReference(f: FormData) {
 }
 
 /* ---------- Administration : coordonnées du site ---------- */
-const SETTING_KEYS = ["telephone", "whatsapp", "email", "adresse", "horaires", "facebook", "linkedin", "instagram", "x"] as const;
+const SETTING_KEYS = ["telephone", "whatsapp", "email", "adresse", "horaires", "facebook", "linkedin", "instagram", "x", "notifyEmail"] as const;
 
 export async function saveSettings(f: FormData) {
   await requireAdmin();
   const values: Record<string, string> = {};
-  for (const key of SETTING_KEYS) values[key] = str(f, key);
-  values.whatsapp = values.whatsapp.replace(/\D/g, "");
+  // On ne modifie que les champs présents dans le formulaire envoyé (il y a deux formulaires dans /admin).
+  const presents = SETTING_KEYS.filter((key) => f.has(key));
+  for (const key of presents) values[key] = str(f, key);
+  if (values.whatsapp !== undefined) values.whatsapp = values.whatsapp.replace(/\D/g, "");
   if (values.email && !/^\S+@\S+\.\S+$/.test(values.email)) fail("/admin", "L'adresse email n'est pas valide.");
+  if (values.notifyEmail && !/^\S+@\S+\.\S+$/.test(values.notifyEmail)) fail("/admin", "L'adresse de réception des alertes n'est pas valide.");
   for (const key of ["facebook", "linkedin", "instagram", "x"]) {
     if (values[key] && !/^https?:\/\//.test(values[key])) fail("/admin", "Les liens des réseaux sociaux doivent commencer par https://");
   }
   await db.$transaction(
-    SETTING_KEYS.map((key) =>
+    presents.map((key) =>
       db.siteSetting.upsert({ where: { key }, update: { value: values[key] }, create: { key, value: values[key] } })
     )
   );

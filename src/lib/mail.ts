@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getSettings } from "./content";
 
 /** Envoie un email. Retourne true si l'envoi a réussi. Ne bloque jamais le visiteur : en cas d'échec, l'erreur est journalisée. */
 export async function sendMail(to: string, subject: string, text: string, replyTo?: string) {
@@ -23,11 +24,12 @@ export async function sendMail(to: string, subject: string, text: string, replyT
   }
 }
 
-/** Alerte envoyée à l'équipe (NOTIFY_EMAIL). Répondre à l'email répond directement au visiteur s'il a donné son email. */
+/** Alerte envoyée à l'équipe, à l'adresse saisie dans /admin (sinon NOTIFY_EMAIL du .env). Répondre à l'email répond directement au visiteur. */
 export async function notify(subject: string, text: string, replyTo?: string) {
-  if (!process.env.NOTIFY_EMAIL) {
-    console.error("Alerte non envoyée : NOTIFY_EMAIL n'est pas configuré.");
+  const { notifyEmail } = await getSettings();
+  if (!notifyEmail) {
+    console.error("Alerte non envoyée : aucune adresse de réception n'est configurée (champ dans /admin).");
     return false;
   }
-  return sendMail(process.env.NOTIFY_EMAIL, subject, text, replyTo);
+  return sendMail(notifyEmail, subject, text, replyTo);
 }

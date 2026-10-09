@@ -34,6 +34,7 @@ export async function getTeam() {
 export type Settings = {
   telephone: string; whatsapp: string; email: string; adresse: string; horaires: string;
   facebook: string; linkedin: string; instagram: string; x: string;
+  notifyEmail: string; // adresse qui reçoit les alertes (jamais affichée sur le site)
 };
 
 /** Coordonnées du site : valeurs saisies dans /admin, sinon valeurs par défaut de src/lib/site.ts. */
@@ -41,6 +42,7 @@ export async function getSettings(): Promise<Settings> {
   const s: Settings = {
     telephone: contact.telephone, whatsapp: site.whatsapp, email: contact.email, adresse: contact.adresse,
     horaires: contact.horaires, facebook: "", linkedin: "", instagram: "", x: "",
+    notifyEmail: process.env.NOTIFY_EMAIL ?? "",
   };
   try {
     const rows = await db.siteSetting.findMany();

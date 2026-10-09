@@ -70,6 +70,13 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
           ))}</tbody>
         </table></div>
 
+        <h2 id="alertes">Alertes par email</h2>
+        <p className="muted">Adresse qui reçoit un email à chaque demande de rendez-vous et à chaque message. Elle n'est jamais affichée sur le site.</p>
+        <form action={saveSettings} className="settings">
+          <label>Email qui reçoit les alertes<input name="notifyEmail" type="email" defaultValue={v("notifyEmail")} placeholder="sidikhsene43@gmail.com" /></label>
+          <div><button className="btn">Enregistrer l'adresse</button></div>
+        </form>
+
         <h2 id="coordonnees">Coordonnées du site</h2>
         <p className="muted">Affichées sur l'accueil, le bouton WhatsApp, la page Rendez-vous, les mentions légales et le pied de page. Un champ vide garde la valeur par défaut.</p>
         <form action={saveSettings} className="settings">

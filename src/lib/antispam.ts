@@ -24,7 +24,7 @@ export function rateLimit(key: string, max: number, windowMs: number) {
 
 /** Champ piège rempli, ou formulaire envoyé trop vite / trop tard : c'est un robot. */
 export function looksLikeBot(f: FormData) {
-  if (String(f.get("website") ?? "").trim() !== "") return true;
+  if (String(f.get("hp_field") ?? "").trim() !== "") return true;
   const age = Date.now() - Number(f.get("t"));
-  return !(age >= 3000 && age <= 7 * 24 * 3600 * 1000);
+  return !(age >= 1500 && age <= 7 * 24 * 3600 * 1000);
 }

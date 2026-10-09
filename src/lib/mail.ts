@@ -25,6 +25,9 @@ export async function sendMail(to: string, subject: string, text: string, replyT
 
 /** Alerte envoyée à l'équipe (NOTIFY_EMAIL). Répondre à l'email répond directement au visiteur s'il a donné son email. */
 export async function notify(subject: string, text: string, replyTo?: string) {
-  if (!process.env.NOTIFY_EMAIL) return false;
+  if (!process.env.NOTIFY_EMAIL) {
+    console.error("Alerte non envoyée : NOTIFY_EMAIL n'est pas configuré.");
+    return false;
+  }
   return sendMail(process.env.NOTIFY_EMAIL, subject, text, replyTo);
 }

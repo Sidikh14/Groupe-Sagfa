@@ -5,6 +5,8 @@ import { db } from "./db";
 import { notify, sendMail } from "./mail";
 import { checkPassword, endSession, requireAdmin, startSession } from "./auth";
 import { clientIp, looksLikeBot, rateLimit } from "./antispam";
+import { getSettings } from "./content";
+import { site } from "./site";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const fail = (to: string, msg: string): never => redirect(`${to}?erreur=${encodeURIComponent(msg)}`);
@@ -24,33 +26,81 @@ export async function logout() {
   redirect("/");
 }
 
-/* ---------- Formulaire de rendez-vous / contact ---------- */
-export async function requestAppointment(f: FormData) {
-  const from = str(f, "from") === "rendez-vous" ? "rendez-vous" : "accueil";
-  const back = (q: string): never => redirect(from === "rendez-vous" ? `/rendez-vous?${q}` : `/?${q}#contact`);
-
-  // Robot : on fait comme si c'était réussi, sans rien enregistrer.
+/* ---------- Formulaire de contact (accueil) : avec message ---------- */
+export async function sendContact(f: FormData) {
+  const back = (q: string): never => redirect(`/?${q}#contact`);
   if (looksLikeBot(f)) back("ok=1");
-  if (!rateLimit(`rdv:${await clientIp()}`, 5, 60 * 60 * 1000)) back(`erreur=${encodeURIComponent("Trop de demandes envoyées. Réessayez plus tard ou contactez-nous sur WhatsApp.")}`);
+  if (!rateLimit(`contact:${await clientIp()}`, 5, 60 * 60 * 1000)) back(`erreur=${encodeURIComponent("Trop de messages envoyés. Réessayez plus tard ou contactez-nous sur WhatsApp.")}`);
 
   const name = str(f, "name"), phone = str(f, "phone"), email = str(f, "email");
   if (!name || phone.length < 6) back(`erreur=${encodeURIComponent("Indiquez votre nom et un numéro de téléphone valide.")}`);
   const pole = str(f, "pole") || "Autre";
+  const message = str(f, "message");
   await db.appointmentRequest.create({
-    data: { name, phone, email: email || null, pole, message: str(f, "message") || null },
+    data: { kind: "CONTACT", name, phone, email: email || null, pole, message: message || null },
   });
   await notify(
-    `Nouvelle demande — ${pole}`,
-    `Nom : ${name}\nTéléphone : ${phone}\nEmail : ${email || "—"}\nSujet : ${pole}\nMessage : ${str(f, "message") || "—"}\nSource : ${from === "rendez-vous" ? "page Rendez-vous" : "formulaire de l'accueil"}`
+    `Nouveau message — ${pole}`,
+    `Nom : ${name}\nTéléphone : ${phone}\nEmail : ${email || "—"}\nSujet : ${pole}\nMessage : ${message || "—"}\n\nÀ consulter dans l'administration : ${site.url}/admin`,
+    /^\S+@\S+\.\S+$/.test(email) ? email : undefined
   );
   if (/^\S+@\S+\.\S+$/.test(email)) {
     await sendMail(
       email,
-      "Groupe SAGFA — nous avons bien reçu votre demande",
-      `Bonjour ${name},\n\nNous avons bien reçu votre demande (sujet : ${pole}). Notre équipe vous rappelle très prochainement pour la suite.\n\nCordialement,\nGroupe SAGFA — Cabinet de gestion, Dakar`
+      "Groupe SAGFA — nous avons bien reçu votre message",
+      `Bonjour ${name},\n\nNous avons bien reçu votre message (sujet : ${pole}). Notre équipe vous répond très prochainement.\n\nCordialement,\nGroupe SAGFA — Cabinet de gestion, Dakar`
     );
   }
   back("ok=1");
+}
+
+/* ---------- Demande de rendez-vous : sans message, jour et heure proposés ---------- */
+export async function requestAppointment(f: FormData) {
+  const back = (q: string): never => redirect(`/rendez-vous?${q}`);
+  const erreur = (m: string): never => back(`erreur=${encodeURIComponent(m)}`);
+  if (looksLikeBot(f)) back("ok=1");
+  if (!rateLimit(`rdv:${await clientIp()}`, 5, 60 * 60 * 1000)) erreur("Trop de demandes envoyées. Réessayez plus tard ou contactez-nous sur WhatsApp.");
+
+  const name = str(f, "name"), phone = str(f, "phone"), email = str(f, "email");
+  const date = str(f, "date"), time = str(f, "time");
+  if (!name || phone.length < 6) erreur("Indiquez votre nom et un numéro de téléphone valide.");
+  if (!/^\S+@\S+\.\S+$/.test(email)) erreur("Indiquez une adresse email valide : nous vous y envoyons la confirmation.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < new Date().toISOString().slice(0, 10)) erreur("Choisissez un jour à partir d'aujourd'hui.");
+  if (!/^\d{2}:\d{2}$/.test(time)) erreur("Choisissez une heure.");
+
+  const pole = str(f, "pole") || "Autre";
+  await db.appointmentRequest.create({
+    data: { kind: "RDV", name, phone, email, pole, wantedDate: date, wantedTime: time },
+  });
+  await notify(
+    `Nouvelle demande de rendez-vous — ${pole}`,
+    `Nom : ${name}\nTéléphone : ${phone}\nEmail : ${email}\nSujet : ${pole}\nJour et heure souhaités : ${date.split("-").reverse().join("/")} à ${time}\n\nPour confirmer le jour et l'heure (le visiteur reçoit alors un email) : ${site.url}/admin`,
+    email
+  );
+  back("ok=1");
+}
+
+/* ---------- Administration : confirmer un rendez-vous ---------- */
+const jourLong = (date: string) =>
+  new Date(`${date}T12:00:00Z`).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+
+export async function confirmAppointment(f: FormData) {
+  await requireAdmin();
+  const id = str(f, "id"), date = str(f, "date"), time = str(f, "time");
+  if (!id || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) fail("/admin", "Indiquez un jour et une heure valides.");
+  const r = await db.appointmentRequest.update({
+    where: { id },
+    data: { confirmedDate: date, confirmedTime: time, status: "CONFIRMED" },
+  });
+  if (!r.email) fail("/admin", `Rendez-vous enregistré, mais ce visiteur n'a pas d'email : appelle-le au ${r.phone}.`);
+  const s = await getSettings();
+  const envoye = await sendMail(
+    r.email!,
+    "Groupe SAGFA — votre rendez-vous est confirmé",
+    `Bonjour ${r.name},\n\nVotre rendez-vous avec le Groupe SAGFA est confirmé :\n\n  ${jourLong(date)} à ${time}\n  Lieu : ${s.adresse}\n\nEn cas d'empêchement, merci de nous prévenir au ${s.telephone}.\n\nCordialement,\nGroupe SAGFA — Cabinet de gestion, Dakar`
+  );
+  if (!envoye) fail("/admin", "Rendez-vous enregistré, mais l'email n'a pas pu partir. Vérifie la configuration des emails (SMTP).");
+  redirect("/admin?ok=1");
 }
 
 /* ---------- Administration : chiffres clés ---------- */

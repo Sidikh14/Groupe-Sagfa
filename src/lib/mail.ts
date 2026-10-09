@@ -1,9 +1,12 @@
 import nodemailer from "nodemailer";
 
-/** Envoie un email. Ne bloque jamais le visiteur : en cas d'échec, l'erreur est seulement journalisée. */
-export async function sendMail(to: string, subject: string, text: string) {
+/** Envoie un email. Retourne true si l'envoi a réussi. Ne bloque jamais le visiteur : en cas d'échec, l'erreur est journalisée. */
+export async function sendMail(to: string, subject: string, text: string, replyTo?: string) {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, NOTIFY_EMAIL } = process.env;
-  if (!SMTP_HOST) return;
+  if (!SMTP_HOST) {
+    console.error("Email non envoyé : SMTP_HOST n'est pas configuré.");
+    return false;
+  }
   try {
     const port = Number(SMTP_PORT ?? 587);
     const transporter = nodemailer.createTransport({
@@ -12,13 +15,16 @@ export async function sendMail(to: string, subject: string, text: string) {
       secure: port === 465,
       auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
     });
-    await transporter.sendMail({ from: SMTP_USER ?? NOTIFY_EMAIL ?? to, to, subject, text });
+    await transporter.sendMail({ from: SMTP_USER ?? NOTIFY_EMAIL ?? to, to, subject, text, replyTo });
+    return true;
   } catch (e) {
     console.error("Envoi d'email échoué :", e);
+    return false;
   }
 }
 
-/** Notification à l'équipe (NOTIFY_EMAIL). */
-export async function notify(subject: string, text: string) {
-  if (process.env.NOTIFY_EMAIL) await sendMail(process.env.NOTIFY_EMAIL, subject, text);
+/** Alerte envoyée à l'équipe (NOTIFY_EMAIL). Répondre à l'email répond directement au visiteur s'il a donné son email. */
+export async function notify(subject: string, text: string, replyTo?: string) {
+  if (!process.env.NOTIFY_EMAIL) return false;
+  return sendMail(process.env.NOTIFY_EMAIL, subject, text, replyTo);
 }

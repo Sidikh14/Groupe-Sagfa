@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LogoMark } from "@/components/Logo";
 import Flash from "@/components/Flash";
 import { secteurs } from "@/lib/site";
-import { requestAppointment } from "@/lib/actions";
+import { sendContact } from "@/lib/actions";
 import AntiSpamFields from "@/components/AntiSpamFields";
 import { getKeyFigures, getReferences, getSettings } from "@/lib/content";
 import { modules, poles } from "@/lib/site";
@@ -238,11 +238,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ o
             </dl>
           </div>
           <div className="contact__card">
-            <h3>Envoyer ma demande</h3>
-            <p>Dites-nous votre activité et le service qui vous intéresse : nous vous répondons pour fixer un rendez-vous.</p>
-            <Flash ok={ok ? "Demande envoyée. Nous vous rappelons pour confirmer le rendez-vous." : undefined} error={erreur} />
-            <form action={requestAppointment} className="form">
-              <input type="hidden" name="from" value="accueil" />
+            <h3>Nous écrire</h3>
+            <p>Posez votre question ou décrivez votre besoin : nous vous répondons rapidement. Pour fixer un rendez-vous, <Link href="/rendez-vous" style={{ color: "var(--green)", fontWeight: 600 }}>choisissez un jour et une heure</Link>.</p>
+            <Flash ok={ok ? "Message envoyé. Nous vous répondons très prochainement." : undefined} error={erreur} />
+            <form action={sendContact} className="form">
               <AntiSpamFields />
               <label>Nom complet<input name="name" required autoComplete="name" /></label>
               <label>Téléphone<input name="phone" type="tel" required autoComplete="tel" /></label>
@@ -253,7 +252,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ o
                 </select>
               </label>
               <label>Message (facultatif)<textarea name="message" rows={4} /></label>
-              <button className="btn">Envoyer ma demande</button>
+              <button className="btn">Envoyer le message</button>
             </form>
           </div>
         </div>

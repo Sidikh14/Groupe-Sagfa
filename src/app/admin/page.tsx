@@ -2,16 +2,20 @@ import type { Metadata } from "next";
 import Flash from "@/components/Flash";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { deleteKeyFigure, deleteReference, initKeyFigures, logout, saveKeyFigure, saveReference, saveSettings } from "@/lib/actions";
+import { confirmAppointment, deleteKeyFigure, deleteReference, initKeyFigures, logout, saveKeyFigure, saveReference, saveSettings } from "@/lib/actions";
 
 export const metadata: Metadata = { title: "Administration", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
+const STATUT: Record<string, string> = { NEW: "À confirmer", CONFIRMED: "Confirmé", DONE: "Terminé", CANCELED: "Annulé" };
+const quand = (d?: string | null, h?: string | null) => (d ? `${d.split("-").reverse().join("/")}${h ? ` à ${h}` : ""}` : "—");
+
 export default async function Admin({ searchParams }: { searchParams: Promise<{ erreur?: string; ok?: string }> }) {
   await requireAdmin();
   const { erreur, ok } = await searchParams;
-  const [rdvs, figures, references, settingRows, team] = await Promise.all([
-    db.appointmentRequest.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
+  const [rdvs, contacts, figures, references, settingRows, team] = await Promise.all([
+    db.appointmentRequest.findMany({ where: { kind: "RDV" }, orderBy: { createdAt: "desc" }, take: 100 }),
+    db.appointmentRequest.findMany({ where: { kind: { not: "RDV" } }, orderBy: { createdAt: "desc" }, take: 100 }),
     db.keyFigure.findMany({ orderBy: { position: "asc" } }),
     db.reference.findMany({ orderBy: { position: "asc" } }),
     db.siteSetting.findMany(),
@@ -27,13 +31,41 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         <h1 style={{ fontSize: "2.2rem" }}>Administration</h1>
         <Flash ok={ok ? "Modification enregistrée." : undefined} error={erreur} />
 
-        <h2>Demandes reçues</h2>
+        <h2>Rendez-vous demandés</h2>
+        <p className="muted">Le visiteur propose un jour et une heure. Confirme-les (ou change-les) : il reçoit alors un email avec le jour et l'heure.</p>
         <div className="table-wrap"><table>
-          <thead><tr><th>Date</th><th>Nom</th><th>Téléphone</th><th>Email</th><th>Sujet</th><th>Message</th></tr></thead>
+          <thead><tr><th>Reçu le</th><th>Nom</th><th>Contact</th><th>Sujet</th><th>Souhaité</th><th>Statut</th><th>Confirmer</th></tr></thead>
           <tbody>{rdvs.map((r) => (
             <tr key={r.id}>
-              <td>{r.createdAt.toLocaleDateString("fr-FR")}</td><td>{r.name}</td><td>{r.phone}</td>
-              <td>{r.email ?? "—"}</td><td>{r.pole}</td><td>{r.message}</td>
+              <td>{r.createdAt.toLocaleDateString("fr-FR")}</td>
+              <td>{r.name}</td>
+              <td>{r.phone}<br /><span className="muted">{r.email ?? "—"}</span></td>
+              <td>{r.pole}</td>
+              <td>{quand(r.wantedDate, r.wantedTime)}</td>
+              <td>{STATUT[r.status] ?? r.status}{r.confirmedDate && <><br /><span className="muted">{quand(r.confirmedDate, r.confirmedTime)}</span></>}</td>
+              <td>
+                <form action={confirmAppointment} className="confirmform">
+                  <input type="hidden" name="id" value={r.id} />
+                  <input type="date" name="date" defaultValue={r.confirmedDate ?? r.wantedDate ?? ""} aria-label="Jour" required />
+                  <input type="time" name="time" step={1800} defaultValue={r.confirmedTime ?? r.wantedTime ?? ""} aria-label="Heure" required />
+                  <button className="btn btn--sm">{r.status === "CONFIRMED" ? "Renvoyer l'email" : "Confirmer et envoyer"}</button>
+                </form>
+              </td>
+            </tr>
+          ))}</tbody>
+        </table></div>
+
+        <h2 style={{ marginTop: "3rem" }}>Messages reçus</h2>
+        <div className="table-wrap"><table>
+          <thead><tr><th>Date</th><th>Nom</th><th>Contact</th><th>Sujet</th><th>Message</th><th></th></tr></thead>
+          <tbody>{contacts.map((r) => (
+            <tr key={r.id}>
+              <td>{r.createdAt.toLocaleDateString("fr-FR")}</td>
+              <td>{r.name}</td>
+              <td>{r.phone}<br /><span className="muted">{r.email ?? "—"}</span></td>
+              <td>{r.pole}</td>
+              <td>{r.message}</td>
+              <td>{r.email && <a href={`mailto:${r.email}?subject=${encodeURIComponent("Groupe SAGFA — réponse à votre message")}`}>Répondre</a>}</td>
             </tr>
           ))}</tbody>
         </table></div>

@@ -412,3 +412,8 @@ th { font-weight: 700; background: var(--white); }
 .team__contact { margin-top: .6rem !important; }
 .team__contact a { display: block; font-size: .8rem; color: var(--green); text-decoration: none; word-break: break-all; }
 .team__contact a:hover { text-decoration: underline; }
+
+/* ===== Lot 6 : confirmation des rendez-vous ===== */
+.confirmform { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; min-width: 260px; }
+.confirmform input { font: inherit; padding: .45rem .5rem; border: 1px solid var(--line); background: var(--white); border-radius: 6px; }
+.confirmform .btn { cursor: pointer; }

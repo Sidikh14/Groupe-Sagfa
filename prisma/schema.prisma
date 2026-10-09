@@ -121,6 +121,11 @@ model AppointmentRequest {
   pole      String
   message   String?
   status    AppointmentStatus @default(NEW)
+  kind          String   @default("CONTACT") // "RDV" (rendez-vous) ou "CONTACT" (message)
+  wantedDate    String?                      // jour proposé par le visiteur, AAAA-MM-JJ
+  wantedTime    String?                      // heure proposée, HH:MM
+  confirmedDate String?                      // jour confirmé par l'équipe
+  confirmedTime String?                      // heure confirmée par l'équipe
   createdAt DateTime          @default(now())
 }
 

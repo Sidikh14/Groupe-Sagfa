@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Flash from "@/components/Flash";
-import { site, poles } from "@/lib/site";
+import { poles } from "@/lib/site";
+import { getSettings } from "@/lib/content";
 import { requestAppointment } from "@/lib/actions";
 import AntiSpamFields from "@/components/AntiSpamFields";
 
@@ -8,7 +9,8 @@ export const metadata: Metadata = { title: "Prendre rendez-vous" };
 
 export default async function RendezVous({ searchParams }: { searchParams: Promise<{ ok?: string; erreur?: string }> }) {
   const { ok, erreur } = await searchParams;
-  const tel = site.phone.replace(/\s/g, "");
+  const settings = await getSettings();
+  const tel = settings.telephone.replace(/\s/g, "");
   return (
     <>
       <section className="hero">
@@ -39,8 +41,8 @@ export default async function RendezVous({ searchParams }: { searchParams: Promi
           <div>
             <h2>Nous joindre</h2>
             <ul className="list">
-              <li>Téléphone : <a href={`tel:${tel}`}>{site.phone}</a></li>
-              <li>WhatsApp : <a href={`https://wa.me/${site.whatsapp}`}>{site.phone}</a></li>
+              <li>Téléphone : <a href={`tel:${tel}`}>{settings.telephone}</a></li>
+              <li>WhatsApp : <a href={`https://wa.me/${settings.whatsapp}`}>{settings.telephone}</a></li>
             </ul>
           </div>
         </div>

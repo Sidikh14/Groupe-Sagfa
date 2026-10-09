@@ -100,3 +100,24 @@ export async function deleteReference(f: FormData) {
   revalidatePath("/");
   redirect("/admin?ok=1");
 }
+
+/* ---------- Administration : coordonnées du site ---------- */
+const SETTING_KEYS = ["telephone", "whatsapp", "email", "adresse", "horaires", "facebook", "linkedin", "instagram", "x"] as const;
+
+export async function saveSettings(f: FormData) {
+  await requireAdmin();
+  const values: Record<string, string> = {};
+  for (const key of SETTING_KEYS) values[key] = str(f, key);
+  values.whatsapp = values.whatsapp.replace(/\D/g, "");
+  if (values.email && !/^\S+@\S+\.\S+$/.test(values.email)) fail("/admin", "L'adresse email n'est pas valide.");
+  for (const key of ["facebook", "linkedin", "instagram", "x"]) {
+    if (values[key] && !/^https?:\/\//.test(values[key])) fail("/admin", "Les liens des réseaux sociaux doivent commencer par https://");
+  }
+  await db.$transaction(
+    SETTING_KEYS.map((key) =>
+      db.siteSetting.upsert({ where: { key }, update: { value: values[key] }, create: { key, value: values[key] } })
+    )
+  );
+  revalidatePath("/", "layout");
+  redirect("/admin?ok=1");
+}

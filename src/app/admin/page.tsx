@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Flash from "@/components/Flash";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { deleteKeyFigure, deleteReference, initKeyFigures, logout, saveKeyFigure, saveReference } from "@/lib/actions";
+import { deleteKeyFigure, deleteReference, initKeyFigures, logout, saveKeyFigure, saveReference, saveSettings } from "@/lib/actions";
 
 export const metadata: Metadata = { title: "Administration", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -10,11 +10,17 @@ export const dynamic = "force-dynamic";
 export default async function Admin({ searchParams }: { searchParams: Promise<{ erreur?: string; ok?: string }> }) {
   await requireAdmin();
   const { erreur, ok } = await searchParams;
-  const [rdvs, figures, references] = await Promise.all([
+  const [rdvs, figures, references, settingRows, team] = await Promise.all([
     db.appointmentRequest.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
     db.keyFigure.findMany({ orderBy: { position: "asc" } }),
     db.reference.findMany({ orderBy: { position: "asc" } }),
+    db.siteSetting.findMany(),
+    db.teamMember.findMany({
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      select: { id: true, name: true, role: true, bio: true, email: true, phone: true, position: true, photoType: true, updatedAt: true },
+    }),
   ]);
+  const v = (k: string) => settingRows.find((r) => r.key === k)?.value ?? "";
   return (
     <section className="section">
       <div className="wrap">
@@ -32,7 +38,64 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
           ))}</tbody>
         </table></div>
 
-        <h2>Chiffres clés</h2>
+        <h2 id="coordonnees">Coordonnées du site</h2>
+        <p className="muted">Affichées sur l'accueil, le bouton WhatsApp, la page Rendez-vous, les mentions légales et le pied de page. Un champ vide garde la valeur par défaut.</p>
+        <form action={saveSettings} className="settings">
+          <label>Téléphone<input name="telephone" defaultValue={v("telephone")} placeholder="+221 77 000 00 00" /></label>
+          <label>Numéro WhatsApp (avec l'indicatif, sans +)<input name="whatsapp" defaultValue={v("whatsapp")} placeholder="221770000000" /></label>
+          <label>Email<input name="email" type="email" defaultValue={v("email")} placeholder="contact@exemple.sn" /></label>
+          <label>Adresse<input name="adresse" defaultValue={v("adresse")} placeholder="Rue, quartier, Dakar" /></label>
+          <label>Horaires d'ouverture<input name="horaires" defaultValue={v("horaires")} placeholder="Lun–Ven 8h–17h" /></label>
+          <label>Facebook (lien)<input name="facebook" defaultValue={v("facebook")} placeholder="https://facebook.com/..." /></label>
+          <label>LinkedIn (lien)<input name="linkedin" defaultValue={v("linkedin")} placeholder="https://linkedin.com/company/..." /></label>
+          <label>Instagram (lien)<input name="instagram" defaultValue={v("instagram")} placeholder="https://instagram.com/..." /></label>
+          <label>X / Twitter (lien)<input name="x" defaultValue={v("x")} placeholder="https://x.com/..." /></label>
+          <div><button className="btn">Enregistrer les coordonnées</button></div>
+        </form>
+
+        <h2 id="equipe" style={{ marginTop: "3rem" }}>Équipe (page « À propos »)</h2>
+        <p className="muted">Photo : JPG, PNG ou WebP, 2 Mo maximum. L'ordre se règle avec le numéro (1 s'affiche en premier).</p>
+        {team.map((m) => (
+          <form key={m.id} method="post" action="/admin/equipe" encType="multipart/form-data" className="teamform">
+            <input type="hidden" name="id" value={m.id} />
+            <div className="teamform__side">
+              {m.photoType
+                ? <img className="teamform__photo" src={`/equipe/${m.id}/photo?v=${m.updatedAt.getTime()}`} alt={m.name} />
+                : <div className="teamform__photo teamform__photo--empty">Pas de photo</div>}
+              <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" aria-label="Photo" />
+              {m.photoType && <label className="teamform__check"><input type="checkbox" name="removePhoto" value="1" /> Retirer la photo</label>}
+            </div>
+            <div className="teamform__fields">
+              <input name="name" defaultValue={m.name} placeholder="Nom et prénom" aria-label="Nom" required />
+              <input name="role" defaultValue={m.role} placeholder="Poste" aria-label="Poste" required />
+              <textarea name="bio" defaultValue={m.bio} rows={3} placeholder="Courte présentation" aria-label="Présentation" />
+              <input name="email" type="email" defaultValue={m.email ?? ""} placeholder="Email" aria-label="Email" />
+              <input name="phone" defaultValue={m.phone ?? ""} placeholder="Téléphone" aria-label="Téléphone" />
+              <input name="position" type="number" defaultValue={m.position} placeholder="Ordre" aria-label="Ordre" />
+              <div className="teamform__actions">
+                <button className="btn btn--sm" name="intent" value="save">Enregistrer</button>
+                <button className="btn btn--ghost btn--sm" name="intent" value="delete">Supprimer</button>
+              </div>
+            </div>
+          </form>
+        ))}
+        <form method="post" action="/admin/equipe" encType="multipart/form-data" className="teamform">
+          <div className="teamform__side">
+            <div className="teamform__photo teamform__photo--empty">Nouveau membre</div>
+            <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" aria-label="Photo" />
+          </div>
+          <div className="teamform__fields">
+            <input name="name" placeholder="Nom et prénom" aria-label="Nom" required />
+            <input name="role" placeholder="Poste" aria-label="Poste" required />
+            <textarea name="bio" rows={3} placeholder="Courte présentation" aria-label="Présentation" />
+            <input name="email" type="email" placeholder="Email" aria-label="Email" />
+            <input name="phone" placeholder="Téléphone" aria-label="Téléphone" />
+            <input name="position" type="number" placeholder="Ordre" aria-label="Ordre" />
+            <div className="teamform__actions"><button className="btn btn--sm" name="intent" value="save">Ajouter le membre</button></div>
+          </div>
+        </form>
+
+        <h2 style={{ marginTop: "3rem" }}>Chiffres clés</h2>
         <p className="muted">Affichés sur l'accueil et la page « À propos ». Un chiffre dont la valeur est vide n'est pas affiché. Exemples de valeur : « 10 ans », « 150+ ».</p>
         {figures.length === 0 && (
           <form action={initKeyFigures}><button className="btn">Créer les 4 chiffres clés</button></form>

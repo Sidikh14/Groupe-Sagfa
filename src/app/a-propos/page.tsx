@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getKeyFigures } from "@/lib/content";
-import { equipe } from "@/lib/site";
+import { getKeyFigures, getTeam } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "À propos",
@@ -13,7 +12,7 @@ const initiales = (nom: string) =>
   nom.startsWith("[") ? "SA" : nom.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
 export default async function APropos() {
-  const figures = await getKeyFigures();
+  const [figures, equipe] = await Promise.all([getKeyFigures(), getTeam()]);
   return (
     <>
       <section className="hero">
@@ -49,23 +48,32 @@ export default async function APropos() {
         </div>
       </section>
 
-      <section className="section">
-        <div className="wrap">
-          <span className="eyebrow">Notre équipe</span>
-          <h2>Les personnes qui gèrent votre dossier.</h2>
-          <ul className="team">
-            {equipe.map((m, i) => (
-              <li key={i} className="team__card">
-                <div className="team__photo">
-                  {m.photo ? <img src={m.photo} alt={m.nom} /> : <span>{initiales(m.nom)}</span>}
-                </div>
-                <h3>{m.nom}</h3>
-                <p>{m.poste}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      {equipe.length > 0 && (
+        <section className="section">
+          <div className="wrap">
+            <span className="eyebrow">Notre équipe</span>
+            <h2>Les personnes qui gèrent votre dossier.</h2>
+            <ul className="team">
+              {equipe.map((m) => (
+                <li key={m.id} className="team__card">
+                  <div className="team__photo">
+                    {m.photoType ? <img src={`/equipe/${m.id}/photo?v=${m.updatedAt.getTime()}`} alt={m.name} /> : <span>{initiales(m.name)}</span>}
+                  </div>
+                  <h3>{m.name}</h3>
+                  <p>{m.role}</p>
+                  {m.bio && <p className="team__bio">{m.bio}</p>}
+                  {(m.email || m.phone) && (
+                    <p className="team__contact">
+                      {m.email && <a href={`mailto:${m.email}`}>{m.email}</a>}
+                      {m.phone && <a href={`tel:${m.phone.replace(/\s/g, "")}`}>{m.phone}</a>}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       <section className="section section--dark">
         <div className="wrap">

@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { site } from "@/lib/site";
 
+export const dynamic = "force-dynamic";
+
 const sans = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
 export const metadata: Metadata = {

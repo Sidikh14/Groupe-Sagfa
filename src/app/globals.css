@@ -390,3 +390,25 @@ th { font-weight: 700; background: var(--white); }
 .footer__links a { color: #aebfbd; transition: color .25s ease; }
 .footer__links a:hover { color: var(--white); }
 .notfound { padding: 3rem 0; }
+
+/* ===== Lot 5 : coordonnées et équipe dans l'administration ===== */
+.settings { display: grid; gap: 1rem; grid-template-columns: 1fr; max-width: 900px; }
+@media (min-width: 700px) { .settings { grid-template-columns: repeat(2, 1fr); } .settings > div { grid-column: 1 / -1; } }
+.settings label { display: grid; gap: .35rem; font-weight: 600; font-size: .95rem; }
+.settings input { font: inherit; padding: .65rem .75rem; border: 1px solid var(--line); background: var(--white); border-radius: 6px; width: 100%; }
+
+.teamform { display: grid; gap: 1rem; padding: 1rem; background: var(--white); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 800px) { .teamform { grid-template-columns: 150px 1fr; } }
+.teamform__side { display: grid; gap: .6rem; align-content: start; justify-items: start; font-size: .8rem; }
+.teamform__photo { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; }
+.teamform__photo--empty { background: var(--paper); border: 1px dashed var(--sage); display: grid; place-items: center; text-align: center; font-size: .7rem; color: var(--slate); padding: .4rem; }
+.teamform__check { display: flex; gap: .4rem; align-items: center; font-weight: 400; }
+.teamform__fields { display: grid; gap: .5rem; }
+.teamform input:not([type="file"]):not([type="checkbox"]), .teamform textarea { font: inherit; padding: .6rem .7rem; border: 1px solid var(--line); background: var(--white); border-radius: 6px; width: 100%; }
+.teamform__actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.teamform .btn { cursor: pointer; }
+
+.team__bio { font-size: .85rem; margin-top: .6rem !important; }
+.team__contact { margin-top: .6rem !important; }
+.team__contact a { display: block; font-size: .8rem; color: var(--green); text-decoration: none; word-break: break-all; }
+.team__contact a:hover { text-decoration: underline; }

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { contact, legal, site } from "@/lib/site";
+import { legal, site } from "@/lib/site";
+import { getSettings } from "@/lib/content";
 
 export const metadata: Metadata = { title: "Mentions légales", alternates: { canonical: "/mentions-legales" } };
 
-export default function MentionsLegales() {
+export default async function MentionsLegales() {
+  const contact = await getSettings();
   return (
     <section className="section">
       <div className="wrap prose">

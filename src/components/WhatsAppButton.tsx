@@ -1,14 +1,12 @@
-import { site } from "@/lib/site";
+import { getSettings } from "@/lib/content";
 
-export default function WhatsAppButton() {
+export default async function WhatsAppButton() {
+  const { whatsapp } = await getSettings();
+  const numero = whatsapp.replace(/\D/g, "");
+  if (!numero) return null;
   return (
-    <a
-      className="whatsapp"
-      href={`https://wa.me/${site.whatsapp}?text=${encodeURIComponent("Bonjour, je souhaite un renseignement.")}`}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      Écrire sur WhatsApp
+    <a className="whatsapp" href={`https://wa.me/${numero}`} target="_blank" rel="noopener noreferrer" aria-label="Discuter sur WhatsApp">
+      WhatsApp
     </a>
   );
 }

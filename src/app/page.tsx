@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/Logo";
 import Flash from "@/components/Flash";
-import { site, contact, secteurs } from "@/lib/site";
+import { secteurs } from "@/lib/site";
 import { requestAppointment } from "@/lib/actions";
 import AntiSpamFields from "@/components/AntiSpamFields";
-import { getKeyFigures, getReferences } from "@/lib/content";
+import { getKeyFigures, getReferences, getSettings } from "@/lib/content";
 import { modules, poles } from "@/lib/site";
 
-const lienDevis = `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(
-  "Bonjour Groupe SAGFA, je souhaite obtenir un devis."
-)}`;
 
 const icons: Record<string, React.ReactNode> = {
   compta: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
@@ -36,7 +33,10 @@ const services = [
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ ok?: string; erreur?: string }> }) {
   const { ok, erreur } = await searchParams;
-  const [figures, references] = await Promise.all([getKeyFigures(), getReferences()]);
+  const [figures, references, settings] = await Promise.all([getKeyFigures(), getReferences(), getSettings()]);
+  const lienDevis = `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(
+    "Bonjour Groupe SAGFA, je souhaite obtenir un devis."
+  )}`;
   return (
     <>
       {/* HERO */}
@@ -231,10 +231,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ o
               Diagnostic de votre organisation et démonstration de SAGFA360, offerts lors d’un premier rendez-vous.
             </p>
             <dl>
-              <div><dt>Adresse</dt><dd>{contact.adresse}</dd></div>
-              <div><dt>Téléphone</dt><dd>{contact.telephone}</dd></div>
-              <div><dt>Email</dt><dd>{contact.email}</dd></div>
-              <div><dt>Horaires</dt><dd>{contact.horaires}</dd></div>
+              <div><dt>Adresse</dt><dd>{settings.adresse}</dd></div>
+              <div><dt>Téléphone</dt><dd>{settings.telephone}</dd></div>
+              <div><dt>Email</dt><dd>{settings.email}</dd></div>
+              <div><dt>Horaires</dt><dd>{settings.horaires}</dd></div>
             </dl>
           </div>
           <div className="contact__card">

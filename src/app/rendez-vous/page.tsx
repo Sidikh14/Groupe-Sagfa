@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Flash from "@/components/Flash";
 import { site, poles } from "@/lib/site";
 import { requestAppointment } from "@/lib/actions";
+import AntiSpamFields from "@/components/AntiSpamFields";
 
 export const metadata: Metadata = { title: "Prendre rendez-vous" };
 
@@ -22,6 +23,7 @@ export default async function RendezVous({ searchParams }: { searchParams: Promi
             <Flash ok={ok ? "Demande envoyée. Nous vous rappelons pour confirmer le rendez-vous." : undefined} error={erreur} />
             <form action={requestAppointment} className="form">
               <input type="hidden" name="from" value="rendez-vous" />
+              <AntiSpamFields />
               <label>Nom complet<input name="name" required autoComplete="name" /></label>
               <label>Téléphone<input name="phone" type="tel" required autoComplete="tel" /></label>
               <label>Email (facultatif)<input name="email" type="email" autoComplete="email" /></label>

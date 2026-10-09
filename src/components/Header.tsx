@@ -4,6 +4,7 @@ import Logo from "./Logo";
 const links = [
   { href: "/#approche", label: "Notre approche" },
   { href: "/#services", label: "Nos services" },
+  { href: "/a-propos", label: "À propos" },
   { href: "/#methode", label: "Notre méthode" },
   { href: "/#sagfa360", label: "SAGFA360" },
   { href: "/#partenaires", label: "Partenaires" },

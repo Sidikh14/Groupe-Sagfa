@@ -3,6 +3,8 @@ import { LogoMark } from "@/components/Logo";
 import Flash from "@/components/Flash";
 import { site, contact, secteurs } from "@/lib/site";
 import { requestAppointment } from "@/lib/actions";
+import AntiSpamFields from "@/components/AntiSpamFields";
+import { getKeyFigures, getReferences } from "@/lib/content";
 import { modules, poles } from "@/lib/site";
 
 const lienDevis = `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(
@@ -34,6 +36,7 @@ const services = [
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ ok?: string; erreur?: string }> }) {
   const { ok, erreur } = await searchParams;
+  const [figures, references] = await Promise.all([getKeyFigures(), getReferences()]);
   return (
     <>
       {/* HERO */}
@@ -66,6 +69,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ o
           </div>
         </div>
       </section>
+
+      {/* CHIFFRES CLÉS (modifiables dans /admin) */}
+      {figures.length > 0 && (
+        <section className="section section--green figures-band" aria-label="Chiffres clés">
+          <div className="wrap">
+            <ul className="figures">
+              {figures.map((f) => <li key={f.id}><strong>{f.value}</strong><span>{f.label}</span></li>)}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* 01 — APPROCHE */}
       <section id="approche" className="section section--white">
@@ -192,6 +206,18 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ o
           <p className="techpartner">
             Partenaire technique : <strong>MICROCLEAN</strong> — maintenance et matériel informatique
           </p>
+          {references.length > 0 && (
+            <div className="references">
+              <h3>Ils nous font confiance</h3>
+              <ul>
+                {references.map((r) => (
+                  <li key={r.id}>
+                    {r.logoUrl ? <img src={r.logoUrl} alt={r.name} /> : r.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
 
@@ -217,6 +243,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ o
             <Flash ok={ok ? "Demande envoyée. Nous vous rappelons pour confirmer le rendez-vous." : undefined} error={erreur} />
             <form action={requestAppointment} className="form">
               <input type="hidden" name="from" value="accueil" />
+              <AntiSpamFields />
               <label>Nom complet<input name="name" required autoComplete="name" /></label>
               <label>Téléphone<input name="phone" type="tel" required autoComplete="tel" /></label>
               <label>Email (facultatif)<input name="email" type="email" autoComplete="email" /></label>

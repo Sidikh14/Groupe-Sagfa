@@ -1,19 +1,77 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { getKeyFigures } from "@/lib/content";
+import { equipe } from "@/lib/site";
 
-export const metadata: Metadata = { title: "À propos" };
+export const metadata: Metadata = {
+  title: "À propos",
+  description: "GROUPE SAGFA SUARL, cabinet de gestion à Dakar : notre approche, nos valeurs et notre équipe.",
+  alternates: { canonical: "/a-propos" },
+};
 
-export default function APropos() {
+const initiales = (nom: string) =>
+  nom.startsWith("[") ? "SA" : nom.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+
+export default async function APropos() {
+  const figures = await getKeyFigures();
   return (
     <>
       <section className="hero">
         <div className="wrap">
-          <h1>À propos</h1>
-          <p>L'histoire, les valeurs et l'équipe du Groupe SAGFA.</p>
+          <span className="eyebrow">À propos</span>
+          <h1>Un cabinet de gestion, <em>un seul interlocuteur.</em></h1>
+          <p className="lead">
+            GROUPE SAGFA SUARL est un cabinet de gestion implanté à Dakar. Nous prenons en charge la comptabilité,
+            la fiscalité, la paie, les ressources humaines, l’IPM et l’informatique des entreprises, partout au Sénégal.
+          </p>
         </div>
       </section>
+
+      {figures.length > 0 && (
+        <section className="section section--green figures-band">
+          <div className="wrap">
+            <ul className="figures">
+              {figures.map((f) => <li key={f.id}><strong>{f.value}</strong><span>{f.label}</span></li>)}
+            </ul>
+          </div>
+        </section>
+      )}
+
+      <section className="section section--white">
+        <div className="wrap">
+          <span className="eyebrow">Nos valeurs</span>
+          <h2>Ce qui guide notre travail.</h2>
+          <div className="benefits benefits--3">
+            <div className="benefit"><h3>Expertise</h3><p>Des spécialistes de la réglementation sociale et fiscale sénégalaise.</p></div>
+            <div className="benefit"><h3>Plateforme</h3><p>Un seul outil, SAGFA360, conçu et maintenu par nos équipes.</p></div>
+            <div className="benefit"><h3>Proximité</h3><p>Un interlocuteur dédié, dans vos locaux ou à distance.</p></div>
+          </div>
+        </div>
+      </section>
+
       <section className="section">
         <div className="wrap">
-          <p className="note">Contenu à fournir : histoire de la société, valeurs, équipe.</p>
+          <span className="eyebrow">Notre équipe</span>
+          <h2>Les personnes qui gèrent votre dossier.</h2>
+          <ul className="team">
+            {equipe.map((m, i) => (
+              <li key={i} className="team__card">
+                <div className="team__photo">
+                  {m.photo ? <img src={m.photo} alt={m.nom} /> : <span>{initiales(m.nom)}</span>}
+                </div>
+                <h3>{m.nom}</h3>
+                <p>{m.poste}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="section section--dark">
+        <div className="wrap">
+          <h2>Parlons de votre gestion.</h2>
+          <p className="muted">Un premier rendez-vous vous est offert pour faire le point sur votre organisation.</p>
+          <Link href="/rendez-vous" className="btn btn--light">Prendre rendez-vous</Link>
         </div>
       </section>
     </>

@@ -13,7 +13,8 @@ export const metadata: Metadata = {
   title: { default: `${site.name} — Cabinet de gestion à Dakar, Sénégal`, template: `%s | ${site.name}` },
   keywords: ["cabinet de gestion Dakar", "comptabilité Dakar", "fiscalité Sénégal", "paie Sénégal", "IPM", "logiciel de gestion Sénégal"],
   description: site.tagline,
-  openGraph: { siteName: site.name, locale: "fr_SN", type: "website" },
+  openGraph: { siteName: site.name, locale: "fr_SN", type: "website", title: `${site.name} — Cabinet de gestion à Dakar`, description: site.tagline },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

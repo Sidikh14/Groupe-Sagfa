@@ -1,27 +1,22 @@
 "use server";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { db } from "./db";
-import { notify } from "./mail";
-import { checkPassword, endSession, hashPassword, requireAdmin, requireUser, startSession } from "./auth";
+import { notify, sendMail } from "./mail";
+import { checkPassword, endSession, requireAdmin, startSession } from "./auth";
+import { clientIp, looksLikeBot, rateLimit } from "./antispam";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const fail = (to: string, msg: string): never => redirect(`${to}?erreur=${encodeURIComponent(msg)}`);
+const num = (f: FormData, k: string) => parseInt(str(f, k), 10) || 0;
 
-export async function register(f: FormData) {
-  const email = str(f, "email").toLowerCase(), name = str(f, "name"), password = str(f, "password");
-  if (!name || !/^\S+@\S+\.\S+$/.test(email)) fail("/connexion", "Nom ou email invalide.");
-  if (password.length < 8) fail("/connexion", "Le mot de passe doit contenir au moins 8 caractères.");
-  if (await db.user.findUnique({ where: { email } })) fail("/connexion", "Un compte existe déjà avec cet email.");
-  const u = await db.user.create({ data: { email, name, phone: str(f, "phone") || null, passwordHash: await hashPassword(password) } });
-  await startSession(u.id);
-  redirect("/compte");
-}
-
+/* ---------- Connexion (administrateur uniquement) ---------- */
 export async function login(f: FormData) {
+  if (!rateLimit(`login:${await clientIp()}`, 10, 15 * 60 * 1000)) fail("/connexion", "Trop de tentatives. Réessayez dans quelques minutes.");
   const u = await db.user.findUnique({ where: { email: str(f, "email").toLowerCase() } });
-  if (!u || !(await checkPassword(str(f, "password"), u.passwordHash))) fail("/connexion", "Email ou mot de passe incorrect.");
+  if (!u || u.role !== "ADMIN" || !(await checkPassword(str(f, "password"), u.passwordHash))) fail("/connexion", "Email ou mot de passe incorrect.");
   await startSession(u!.id);
-  redirect(u!.role === "ADMIN" ? "/admin" : "/compte");
+  redirect("/admin");
 }
 
 export async function logout() {
@@ -29,53 +24,79 @@ export async function logout() {
   redirect("/");
 }
 
+/* ---------- Formulaire de rendez-vous / contact ---------- */
 export async function requestAppointment(f: FormData) {
   const from = str(f, "from") === "rendez-vous" ? "rendez-vous" : "accueil";
   const back = (q: string): never => redirect(from === "rendez-vous" ? `/rendez-vous?${q}` : `/?${q}#contact`);
-  const name = str(f, "name"), phone = str(f, "phone");
+
+  // Robot : on fait comme si c'était réussi, sans rien enregistrer.
+  if (looksLikeBot(f)) back("ok=1");
+  if (!rateLimit(`rdv:${await clientIp()}`, 5, 60 * 60 * 1000)) back(`erreur=${encodeURIComponent("Trop de demandes envoyées. Réessayez plus tard ou contactez-nous sur WhatsApp.")}`);
+
+  const name = str(f, "name"), phone = str(f, "phone"), email = str(f, "email");
   if (!name || phone.length < 6) back(`erreur=${encodeURIComponent("Indiquez votre nom et un numéro de téléphone valide.")}`);
   const pole = str(f, "pole") || "Autre";
   await db.appointmentRequest.create({
-    data: { name, phone, email: str(f, "email") || null, pole, message: str(f, "message") || null },
+    data: { name, phone, email: email || null, pole, message: str(f, "message") || null },
   });
   await notify(
     `Nouvelle demande — ${pole}`,
-    `Nom : ${name}\nTéléphone : ${phone}\nEmail : ${str(f, "email") || "—"}\nSujet : ${pole}\nMessage : ${str(f, "message") || "—"}\nSource : ${from === "rendez-vous" ? "page Rendez-vous" : "formulaire de l'accueil"}`
+    `Nom : ${name}\nTéléphone : ${phone}\nEmail : ${email || "—"}\nSujet : ${pole}\nMessage : ${str(f, "message") || "—"}\nSource : ${from === "rendez-vous" ? "page Rendez-vous" : "formulaire de l'accueil"}`
   );
+  if (/^\S+@\S+\.\S+$/.test(email)) {
+    await sendMail(
+      email,
+      "Groupe SAGFA — nous avons bien reçu votre demande",
+      `Bonjour ${name},\n\nNous avons bien reçu votre demande (sujet : ${pole}). Notre équipe vous rappelle très prochainement pour la suite.\n\nCordialement,\nGroupe SAGFA — Cabinet de gestion, Dakar`
+    );
+  }
   back("ok=1");
 }
 
-export async function subscribe(f: FormData) {
-  const user = await requireUser();
-  const plan = await db.plan.findFirst({ where: { id: str(f, "planId"), active: true } });
-  if (!plan) fail("/logiciels", "Formule introuvable.");
-  await db.order.create({ data: { userId: user.id, planId: plan!.id, amountXof: plan!.priceXof } });
-  redirect("/compte?commande=1");
+/* ---------- Administration : chiffres clés ---------- */
+export async function initKeyFigures() {
+  await requireAdmin();
+  if ((await db.keyFigure.count()) === 0) {
+    const labels = ["Années d'expérience", "Clients accompagnés", "Salariés dont nous traitons la paie", "Déclarations fiscales déposées par an"];
+    await db.keyFigure.createMany({ data: labels.map((label, i) => ({ label, value: "", position: i + 1 })) });
+  }
+  revalidatePath("/"); revalidatePath("/a-propos");
+  redirect("/admin?ok=1");
 }
 
-export async function markPaid(f: FormData) {
+export async function saveKeyFigure(f: FormData) {
   await requireAdmin();
-  const order = await db.order.findUnique({ where: { id: str(f, "orderId") }, include: { plan: true, subscription: true } });
-  if (!order || order.status === "PAID") redirect("/admin");
-  const start = new Date(), end = new Date(start);
-  if (order!.plan.interval === "YEAR") end.setFullYear(end.getFullYear() + 1); else end.setMonth(end.getMonth() + 1);
-  await db.$transaction([
-    db.order.update({ where: { id: order!.id }, data: { status: "PAID" } }),
-    db.subscription.create({ data: { userId: order!.userId, orderId: order!.id, startsAt: start, renewsAt: end } }),
-  ]);
-  redirect("/admin");
+  const id = str(f, "id"), label = str(f, "label");
+  if (!label) fail("/admin", "Le libellé est obligatoire.");
+  const data = { label, value: str(f, "value"), position: num(f, "position") };
+  if (id) await db.keyFigure.update({ where: { id }, data }); else await db.keyFigure.create({ data });
+  revalidatePath("/"); revalidatePath("/a-propos");
+  redirect("/admin?ok=1");
 }
 
-export async function addProduct(f: FormData) {
+export async function deleteKeyFigure(f: FormData) {
   await requireAdmin();
-  const name = str(f, "name"), price = parseInt(str(f, "price"), 10);
-  if (!name || !(price > 0)) fail("/admin", "Nom et prix valides requis.");
-  const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  await db.product.create({
-    data: {
-      slug: `${slug}-${Date.now().toString(36)}`, name, description: str(f, "description"),
-      plans: { create: { label: str(f, "interval") === "YEAR" ? "Annuel" : "Mensuel", interval: str(f, "interval") === "YEAR" ? "YEAR" : "MONTH", priceXof: price } },
-    },
-  });
-  redirect("/admin");
+  const id = str(f, "id");
+  if (id) await db.keyFigure.delete({ where: { id } });
+  revalidatePath("/"); revalidatePath("/a-propos");
+  redirect("/admin?ok=1");
+}
+
+/* ---------- Administration : références ---------- */
+export async function saveReference(f: FormData) {
+  await requireAdmin();
+  const id = str(f, "id"), name = str(f, "name");
+  if (!name) fail("/admin", "Le nom est obligatoire.");
+  const data = { name, logoUrl: str(f, "logoUrl") || null, position: num(f, "position") };
+  if (id) await db.reference.update({ where: { id }, data }); else await db.reference.create({ data });
+  revalidatePath("/");
+  redirect("/admin?ok=1");
+}
+
+export async function deleteReference(f: FormData) {
+  await requireAdmin();
+  const id = str(f, "id");
+  if (id) await db.reference.delete({ where: { id } });
+  revalidatePath("/");
+  redirect("/admin?ok=1");
 }

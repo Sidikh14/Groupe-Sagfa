@@ -260,3 +260,23 @@ export const poles: Pole[] = [
     services: ["Installation de logiciels de gestion", "Matériel informatique", "Maintenance avec MICROCLEAN", "Support et assistance"],
   },
 ];
+
+/* ⚠️ À REMPLIR : équipe affichée sur la page « À propos ».
+   Photo facultative : mets l'image dans public/equipe/ et écris son chemin (ex. "/equipe/nom.jpg"). */
+export const equipe: { nom: string; poste: string; photo?: string }[] = [
+  { nom: "[NOM ET PRÉNOM]", poste: "Directeur général" },
+  { nom: "[NOM ET PRÉNOM]", poste: "Responsable comptabilité et fiscalité" },
+  { nom: "[NOM ET PRÉNOM]", poste: "Responsable informatique" },
+];
+
+/* ⚠️ À REMPLIR : informations des mentions légales. À faire relire par un juriste avant la mise en ligne. */
+export const legal = {
+  raisonSociale: "GROUPE SAGFA SUARL",
+  formeJuridique: "Société unipersonnelle à responsabilité limitée (SUARL)",
+  capital: "[CAPITAL] FCFA",
+  ninea: "[NINEA]",
+  rccm: "[RCCM]",
+  responsablePublication: "[NOM DU RESPONSABLE DE PUBLICATION]",
+  hebergeur: "[NOM ET ADRESSE DE L'HÉBERGEUR]",
+  conservation: "[DURÉE DE CONSERVATION, par exemple 3 ans après le dernier contact]",
+};

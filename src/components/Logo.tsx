@@ -1,37 +1,30 @@
 type Props = {
-  /** "light" = fond clair (Groupe en bleu-nuit, Sagfa en vert) ; "dark" = fond vert/sombre */
+  /** "light" = fond clair (logo vert foncé) ; "dark" = fond vert/sombre (logo crème) */
   variant?: "light" | "dark";
-  /** Affiche la mention « CABINET DE GESTION » et le filet vertical */
+  /** Version agrandie du logo (pages à fort impact) */
   full?: boolean;
   className?: string;
 };
 
+/** Symbole seul : les trois barres ascendantes du nouveau logo Groupe SAGFA. */
 export function LogoMark({ variant = "light", className }: { variant?: "light" | "dark"; className?: string }) {
-  const c =
-    variant === "light"
-      ? { a: "#0F4C47", b: "#0F4C47", c: "#8FAA99", d: "#D8C5A5" }
-      : { a: "#F7F4EC", b: "#F7F4EC", c: "#8FAA99", d: "#D8C5A5" };
-  const s = { strokeWidth: 3, strokeLinejoin: "round" as const };
+  const big = variant === "light" ? "#0F4C47" : "#F7F4EC";
+  const s = { strokeWidth: 8, strokeLinejoin: "round" as const };
   return (
-    <svg viewBox="-2 -2 104 146" className={className} aria-hidden="true" focusable="false">
-      <path d="M0 38 L46 24 L46 70 L0 88Z" fill={c.a} stroke={c.a} {...s} />
-      <path d="M50 14 L96 0 L96 49 L50 69Z" fill={c.b} stroke={c.b} {...s} />
-      <path d="M0 94 L46 74 L46 112 L0 138Z" fill={c.c} stroke={c.c} {...s} />
-      <path d="M50 73 L96 51 L96 88 L50 115Z" fill={c.d} stroke={c.d} {...s} />
+    <svg viewBox="127 127 394 396" className={className} aria-hidden="true" focusable="false">
+      <path d="M139 390 L243 346 L243 466 L139 510Z" fill="#D8C5A5" stroke="#D8C5A5" {...s} />
+      <path d="M272 285 L376 241 L376 447 L272 491Z" fill="#8FAA99" stroke="#8FAA99" {...s} />
+      <path d="M405 182 L509 138 L509 430 L405 474Z" fill={big} stroke={big} {...s} />
     </svg>
   );
 }
 
 export default function Logo({ variant = "light", full = false, className = "" }: Props) {
+  const src = variant === "light" ? "/brand/logo-horizontal-clair.png" : "/brand/logo-horizontal-sombre.png";
   return (
-    <span className={`logo logo--${variant} ${full ? "logo--full" : ""} ${className}`} role="img" aria-label="Groupe Sagfa, cabinet de gestion">
-      <LogoMark variant={variant} className="logo__mark" />
-      {full && <span className="logo__rule" aria-hidden="true" />}
-      <span className="logo__text" aria-hidden="true">
-        <span className="logo__top">Groupe</span>
-        <span className="logo__bottom">Sagfa</span>
-        {full && <span className="logo__tag">Cabinet de gestion</span>}
-      </span>
+    <span className={`logo logo--${variant} ${full ? "logo--full" : ""} ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="Groupe SAGFA, cabinet de gestion" className="logo__img" width={1200} height={267} />
     </span>
   );
 }

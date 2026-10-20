@@ -55,19 +55,10 @@ p { margin: 0 0 1em; max-width: 62ch; }
 .eyebrow { display: block; font-size: .7rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--slate); margin-bottom: 1.2rem; }
 .section--dark .eyebrow, .section--green .eyebrow { color: #9fb8b3; }
 
-/* ===== Logo ===== */
-.logo { display: inline-flex; align-items: center; gap: .6rem; line-height: 1; }
-.logo__mark { height: 2.1rem; width: auto; flex: none; }
-.logo__text { display: flex; flex-direction: column; font-weight: 800; letter-spacing: -0.03em; font-size: 1.05rem; line-height: .95; }
-.logo--light .logo__top { color: var(--ink); }
-.logo--light .logo__bottom { color: var(--green); }
-.logo--dark .logo__top { color: var(--paper); }
-.logo--dark .logo__bottom { color: var(--sage); }
-.logo__tag { margin-top: .55em; font-size: .5em; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--slate); }
-.logo--full { gap: 1.2rem; font-size: 2.2rem; }
-.logo--full .logo__mark { height: 5em; }
-.logo--full .logo__text { font-size: 1em; }
-.logo__rule { width: 1px; align-self: stretch; background: var(--line); }
+/* ===== Logo (nouveau logo Groupe SAGFA, images dans /public/brand) ===== */
+.logo { display: inline-flex; align-items: center; line-height: 1; }
+.logo__img { height: 2.6rem; width: auto; display: block; }
+.logo--full .logo__img { height: 6rem; }
 
 /* ===== En-tête ===== */
 .header { background: var(--paper); color: var(--ink); position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--line); }
@@ -417,3 +408,50 @@ th { font-weight: 700; background: var(--white); }
 .confirmform { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; min-width: 260px; }
 .confirmform input { font: inherit; padding: .45rem .5rem; border: 1px solid var(--line); background: var(--white); border-radius: 6px; }
 .confirmform .btn { cursor: pointer; }
+
+/* ===================================================================
+   CARTE D'ACCUEIL : logo cercle qui se retourne et révèle la photo
+   =================================================================== */
+.hero-card__art {
+  position: relative;
+  width: min(62%, 300px);
+  aspect-ratio: 1;
+  margin: 1rem auto .5rem;
+  padding: 0;
+  display: block;
+  cursor: pointer;            /* permet aussi le retournement au toucher sur téléphone */
+  -webkit-tap-highlight-color: transparent;
+}
+.hero-card__art > * { display: none; }   /* l'ancien symbole est remplacé par le cercle */
+.hero-card__art::before,
+.hero-card__art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  box-sizing: border-box;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .28));
+  transition: transform .9s var(--ease-out);
+  will-change: transform;
+}
+.hero-card__art::before {
+  background-image: url("/brand/logo-cercle.png");
+  transform: perspective(1000px) rotateY(0deg);
+}
+.hero-card__art::after {
+  background-image: url("/brand/photo-maman.jpg");
+  border: 4px solid var(--sage);
+  transform: perspective(1000px) rotateY(180deg);
+}
+.hero-card__art:hover::before,
+.hero-card__art:focus-within::before { transform: perspective(1000px) rotateY(-180deg); }
+.hero-card__art:hover::after,
+.hero-card__art:focus-within::after { transform: perspective(1000px) rotateY(0deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-card__art::before, .hero-card__art::after { transition: none; }
+}
